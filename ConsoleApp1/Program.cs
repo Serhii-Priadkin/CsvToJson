@@ -18,13 +18,13 @@ namespace Hometask1 //Don't work with:| ' |,| “ |,| ” |
         static void Main(string[] args)
         {
             string directoryName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_a\";
-            DirectoryInfo d = new DirectoryInfo(directoryName);
+            DirectoryInfo folderA = new DirectoryInfo(directoryName);
             List<Person> people = new List<Person>();
-            var files = d.GetFiles()
+            var files = folderA.GetFiles()
                 .Where(f => (f.Name.EndsWith(".txt") || f.Name.EndsWith(".csv")) && !f.Name.StartsWith("(Done)"))
                 .OrderBy(f => f.LastWriteTime);
-            int fileNumber = 1;    
-                
+            int fileNumber = 1;
+
 
             foreach (FileInfo file in files)
             {
@@ -96,20 +96,40 @@ namespace Hometask1 //Don't work with:| ' |,| “ |,| ” |
                                  });
 
                 string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);
-                string folderName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b";
-                string pathString = System.IO.Path.Combine(folderName, $"{name}");
-                System.IO.Directory.CreateDirectory(pathString);
-                string json = JsonConvert.SerializeObject(groupByCityThenByService,
-                                                          Newtonsoft.Json.Formatting.Indented,
-                                                          new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });
+            string folderName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b";
+            string pathString = System.IO.Path.Combine(folderName, $"{name}");
+            System.IO.Directory.CreateDirectory(pathString);
+            string json = JsonConvert.SerializeObject(groupByCityThenByService,
+                                                      Newtonsoft.Json.Formatting.Indented,
+                                                      new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });
 
-                //Console.WriteLine(json);
-                File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\output{fileNumber}.json", json);
-                fileNumber++;
-                FileInfo newfile = file.CopyTo($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_a\(Done){file.Name}");
-                file.Delete();
-                
+            if (Directory.GetFileSystemEntries(pathString).Length != 0)
+            {
+                DirectoryInfo folderB = new DirectoryInfo(pathString);
+                string lastOutputName = null;
+                string lastOutputIndex = null;
+                var lastOutputFiles = folderB.GetFiles()
+                        .Where(f => f.Name.EndsWith($".json"))
+                        .OrderByDescending(f => f.Name).Take(1);
+                foreach (var lastOutputFile in lastOutputFiles)
+                    lastOutputName = lastOutputFile.Name.ToString();
+                foreach (char findIndex in lastOutputName)
+                    if (Char.IsDigit(findIndex))
+                    {
+                        lastOutputIndex += findIndex;
+                    }
+                int lastIndex = Convert.ToInt32(lastOutputIndex);
+                fileNumber = lastIndex + 1;
+                Console.WriteLine(fileNumber);
             }
+
+            //Console.WriteLine(json);
+            File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\output{fileNumber}.json", json);
+            fileNumber++;
+            FileInfo newfile = file.CopyTo($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_a\(Done){file.Name}");
+            file.Delete();
+
         }
     }
+}
 }
