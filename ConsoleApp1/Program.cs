@@ -21,10 +21,10 @@ namespace Hometask1 //Don't work with:| ' |,| “ |,| ” |
             DirectoryInfo d = new DirectoryInfo(directoryName);
             List<Person> people = new List<Person>();
             var files = d.GetFiles()
-                .Where(f => f.Name.EndsWith(".txt") || f.Name.EndsWith(".csv"))
-                .OrderByDescending(f => f.Name)
-                .Take(1);
-
+                .Where(f => (f.Name.EndsWith(".txt") || f.Name.EndsWith(".csv")) && !f.Name.StartsWith("(Done)"))
+                .OrderBy(f => f.LastWriteTime);
+            int fileNumber = 1;    
+                
 
             foreach (FileInfo file in files)
             {
@@ -32,22 +32,21 @@ namespace Hometask1 //Don't work with:| ' |,| “ |,| ” |
 
                 using (TextFieldParser parser = new TextFieldParser($@"{file}"))
                 {
-                    
+
                     parser.TextFieldType = FieldType.Delimited;
                     parser.SetDelimiters(",");
                     while (!parser.EndOfData)
                     {
-                        string[] fields = parser.ReadFields();
+                        string[]? fields = parser.ReadFields();
 
 
                         Person newPerson = new Person();
 
-                        //newPerson.First_name = fields[0];
-                        //newPerson.Last_name = fields[1];
-                        newPerson.name = fields[0] +" "+ fields[1];
 
-                        //newPerson.Address = fields[2];
+                        newPerson.name = fields[0] + " " + fields[1];
+
                         string[] addressSep = fields[2].Split(',');
+
                         newPerson.city = addressSep[0];
 
                         decimal valPay;
@@ -72,46 +71,45 @@ namespace Hometask1 //Don't work with:| ' |,| “ |,| ” |
                         people.Add(newPerson);
 
                     }
-                    //foreach (Person person in people)
-                    //{
-                    //    Console.WriteLine($"{person.First_name} | {person.Last_name} | {person.Address} | {person.City} | {person.Payment} | {person.Date} | {person.Account_number} | {person.Service}");
-                    //}
-
                 }
+                List<Person> personInfo = new List<Person>();
+                var groupByCityThenByService = people
+                                 .GroupBy(c => c.city)
+                                 .Select(g => new
+                                 {
+                                     city = g.Key,
+                                     services = g
+                                                 .GroupBy(g => g.service)
+                                                 .Select(s => new
+                                                 {
+                                                     name = s.Key,
+                                                     payers = s.Select(a => new
+                                                     {
+                                                         a.name,
+                                                         a.payment,
+                                                         a.date,
+                                                         a.account_number
+                                                     }),
+                                                     total = s.Sum(c => c.payment)
+                                                 }),
+                                     total = g.Sum(c => c.payment)
+                                 });
+
+                string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);
+                string folderName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b";
+                string pathString = System.IO.Path.Combine(folderName, $"{name}");
+                System.IO.Directory.CreateDirectory(pathString);
+                string json = JsonConvert.SerializeObject(groupByCityThenByService,
+                                                          Newtonsoft.Json.Formatting.Indented,
+                                                          new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });
+
+                //Console.WriteLine(json);
+                File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\output{fileNumber}.json", json);
+                fileNumber++;
+                FileInfo newfile = file.CopyTo($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_a\(Done){file.Name}");
+                file.Delete();
+                
             }
-
-            List<Person> personInfo = new List<Person>();
-            var groupByCityThenByService = people
-                             .GroupBy(c => c.city)
-                             .Select(g => new
-                             {
-                                 city = g.Key,
-                                 services = g
-                                             .GroupBy(g => g.service)
-                                             .Select(s => new    
-                                                     {  
-                                                        name = s.Key, 
-                                                        payers = s.Select(a => new 
-                                                                               {
-                                                                                   a.name, a.payment, a.date, a.account_number
-                                                                               }),
-                                                        total = s.Sum(c=>c.payment)
-                                                     }), 
-                                 total =g.Sum(c=>c.payment)
-                             });
-
-            string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);
-            string folderName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b";
-            string pathString = System.IO.Path.Combine(folderName, $"{name}");
-            System.IO.Directory.CreateDirectory(pathString);
-            Console.WriteLine(name);
-            string json = JsonConvert.SerializeObject(groupByCityThenByService, 
-                                                      Newtonsoft.Json.Formatting.Indented, 
-                                                      new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });
-
-            Console.WriteLine(json);
-            File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\output.json", json);
-
         }
     }
 }
