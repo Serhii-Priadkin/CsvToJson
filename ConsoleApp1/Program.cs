@@ -51,117 +51,123 @@ namespace Hometask1 //Don't work with:| ' |,| “ |,| ” |
                             var files = folderA.GetFiles()
                                                .Where(f => (f.Name.EndsWith(".txt") || f.Name.EndsWith(".csv")) && !f.Name.StartsWith("(Done)"))
                                                .OrderByDescending(f => f.LastWriteTime);
-                            int fileNumber = 1;
-                            foreach (FileInfo file in files)
+                            if (files == null || !files.Any())
                             {
-                                using (TextFieldParser parser = new TextFieldParser($@"{file}"))
+                                Console.WriteLine("\nThere are no files to process\n");
+                            }
+                            else
+                            {
+                                int fileNumber = 1;
+                                foreach (FileInfo file in files)
                                 {
-
-                                    parser.TextFieldType = FieldType.Delimited;
-                                    parser.SetDelimiters(",");
-                                    while (!parser.EndOfData)
+                                    using (TextFieldParser parser = new TextFieldParser($@"{file}"))
                                     {
-                                        string[]? fields = parser.ReadFields();
 
-
-                                        Person newPerson = new Person();
-
-
-                                        newPerson.name = fields[0] + " " + fields[1];
-
-                                        string[] addressSep = fields[2].Split(',');
-
-                                        newPerson.city = addressSep[0];
-
-                                        decimal valPay;
-                                        if (Decimal.TryParse(fields[3], out valPay))
+                                        parser.TextFieldType = FieldType.Delimited;
+                                        parser.SetDelimiters(",");
+                                        while (!parser.EndOfData)
                                         {
-                                            newPerson.payment = valPay;
+                                            string[]? fields = parser.ReadFields();
+
+
+                                            Person newPerson = new Person();
+
+
+                                            newPerson.name = fields[0] + " " + fields[1];
+
+                                            string[] addressSep = fields[2].Split(',');
+
+                                            newPerson.city = addressSep[0];
+
+                                            decimal valPay;
+                                            if (Decimal.TryParse(fields[3], out valPay))
+                                            {
+                                                newPerson.payment = valPay;
+                                            }
+
+                                            DateTime valDate;
+                                            if (DateTime.TryParseExact(fields[4], "yyyy-dd-MM", null, DateTimeStyles.None, out valDate))
+                                            {
+                                                newPerson.date = valDate;
+                                            }
+
+                                            long valLong;
+                                            if (Int64.TryParse(fields[5], out valLong))
+                                            {
+                                                newPerson.account_number = valLong;
+                                            }
+                                            newPerson.service = fields[6];
+
+                                            people.Add(newPerson);
+
                                         }
-
-                                        DateTime valDate;
-                                        if (DateTime.TryParseExact(fields[4], "yyyy-dd-MM", null, DateTimeStyles.None, out valDate))
-                                        {
-                                            newPerson.date = valDate;
-                                        }
-
-                                        long valLong;
-                                        if (Int64.TryParse(fields[5], out valLong))
-                                        {
-                                            newPerson.account_number = valLong;
-                                        }
-                                        newPerson.service = fields[6];
-
-                                        people.Add(newPerson);
-
                                     }
-                                }
-                                List<Person> personInfo = new List<Person>();
-                                var groupByCityThenByService = people
-                                                 .GroupBy(c => c.city)
-                                                 .Select(g => new
-                                                 {
-                                                     city = g.Key,
-                                                     services = g
-                                                                 .GroupBy(g => g.service)
-                                                                 .Select(s => new
-                                                                 {
-                                                                     name = s.Key,
-                                                                     payers = s.Select(a => new
+                                    List<Person> personInfo = new List<Person>();
+                                    var groupByCityThenByService = people
+                                                     .GroupBy(c => c.city)
+                                                     .Select(g => new
+                                                     {
+                                                         city = g.Key,
+                                                         services = g
+                                                                     .GroupBy(g => g.service)
+                                                                     .Select(s => new
                                                                      {
-                                                                         a.name,
-                                                                         a.payment,
-                                                                         a.date,
-                                                                         a.account_number
+                                                                         name = s.Key,
+                                                                         payers = s.Select(a => new
+                                                                         {
+                                                                             a.name,
+                                                                             a.payment,
+                                                                             a.date,
+                                                                             a.account_number
+                                                                         }),
+                                                                         total = s.Sum(c => c.payment)
                                                                      }),
-                                                                     total = s.Sum(c => c.payment)
-                                                                 }),
-                                                     total = g.Sum(c => c.payment)
-                                                 });
+                                                         total = g.Sum(c => c.payment)
+                                                     });
 
-                                string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);
-                                string folderName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b";
-                                string pathString = System.IO.Path.Combine(folderName, $"{name}");
-                                System.IO.Directory.CreateDirectory(pathString);
-                                string json = JsonConvert.SerializeObject(groupByCityThenByService,
-                                                                          Newtonsoft.Json.Formatting.Indented,
-                                                                          new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });
+                                    string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);
+                                    string folderName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b";
+                                    string pathString = System.IO.Path.Combine(folderName, $"{name}");
+                                    System.IO.Directory.CreateDirectory(pathString);
+                                    string json = JsonConvert.SerializeObject(groupByCityThenByService,
+                                                                              Newtonsoft.Json.Formatting.Indented,
+                                                                              new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });
 
-                                if (Directory.GetFileSystemEntries(pathString).Length != 0)
-                                {
-                                    DirectoryInfo folderB = new DirectoryInfo(pathString);
-                                    string lastOutputName = "";
-                                    string lastOutputIndex = "";
-                                    var lastOutputFiles = folderB.GetFiles()
-                                                                 .Where(f => f.Name.EndsWith($".json"))
-                                                                 .OrderBy(f => f.Name.Length).TakeLast(1);
+                                    if (Directory.GetFileSystemEntries(pathString).Length != 0)
+                                    {
+                                        DirectoryInfo folderB = new DirectoryInfo(pathString);
+                                        string lastOutputName = "";
+                                        string lastOutputIndex = "";
+                                        var lastOutputFiles = folderB.GetFiles()
+                                                                     .Where(f => f.Name.EndsWith($".json"))
+                                                                     .OrderBy(f => f.Name.Length).TakeLast(1);
                                         foreach (var lastOutputFile in lastOutputFiles)
                                         {
                                             lastOutputName = lastOutputFile.Name.ToString();
                                         }
-                                    for (int i = 0; i < lastOutputName.Length; i++)
-                                    {
-                                        if (Char.IsNumber(lastOutputName[i]))
+                                        for (int i = 0; i < lastOutputName.Length; i++)
                                         {
-                                            lastOutputIndex += lastOutputName[i];
+                                            if (Char.IsNumber(lastOutputName[i]))
+                                            {
+                                                lastOutputIndex += lastOutputName[i];
+                                            }
                                         }
-                                    }
-                                    lastOutputIndex.Reverse();
+                                        lastOutputIndex.Reverse();
 
-                                    int valInt;
-                                    if (Int32.TryParse(lastOutputIndex, out valInt))
-                                    {
-                                        lastIndex = valInt;
+                                        int valInt;
+                                        if (Int32.TryParse(lastOutputIndex, out valInt))
+                                        {
+                                            lastIndex = valInt;
+                                        }
+                                        fileNumber = lastIndex + 1;
                                     }
-                                    fileNumber = lastIndex + 1;
+                                    File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\output{fileNumber}.json", json);
+                                    Console.WriteLine($"{file.Name}   convert to   output{fileNumber}.json");
+                                    fileNumber++;
+                                    FileInfo newfiles = file.CopyTo($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_a\(Done){file.Name}");
+                                    file.Delete();
                                 }
-                                File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\output{fileNumber}.json", json);
-                                Console.WriteLine($"{file.Name}   convert to   output{fileNumber}.json");
-                                fileNumber++;
-                                FileInfo newfiles = file.CopyTo($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_a\(Done){file.Name}");
-                                file.Delete();
                             }
-
                         }
                         
                         break;
