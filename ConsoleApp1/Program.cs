@@ -60,7 +60,7 @@ namespace Hometask1 //Don't work with:| ' |,| “ |,| ” |
                                 List<Person> people = new List<Person>();
                                 var files = folderA.GetFiles()
                                     .Where(f => (f.Name.EndsWith(".txt") || f.Name.EndsWith(".csv")) && !f.Name.StartsWith("(Done)"))
-                                    .OrderByDescending(f => f.LastWriteTime);
+                                    .OrderBy(f => f.LastWriteTime);
                                 if (files == null || !files.Any())
                                 {
                                     Console.WriteLine("\nThere are no files to process\n");
