@@ -21,31 +21,31 @@ namespace Hometask1
             bool isWork = true;
             while (isWork)
             {
-                int parsedFiles = 0;//The counter of files reset every day
-                int parsedLines = 0;//The counter of lines in all files reset every day
-                int numberOfErrors = 0;//The counter of errors reset every day
-                List<string> invalidFilesList = new List<string>();//There is a new list of invalid files every day
+                int parsedFiles = 0;// The counter of files reset every day
+                int parsedLines = 0;// The counter of lines in all files reset every day
+                int numberOfErrors = 0;// The counter of errors reset every day
+                List<string> invalidFilesList = new List<string>();// There is a new list of invalid files every day
                 string invalidFiles = null;
                 string errors = null;
                 try
                 {
                     DateTime dateTimeNow = new DateTime();
                     dateTimeNow = DateTime.Today;
-                    DateTime DateTimeOfNextDay = dateTimeNow.AddDays(1);
-                    string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);
+                    DateTime DateTimeOfNextDay = dateTimeNow.AddDays(1);// For doing some actions each day at midnight 
+                    string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);// The today's date will be a name of subfolder 
                     string directoryName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_a\";
                     DirectoryInfo folderA = new DirectoryInfo(directoryName);
 
-                    while (DateTime.Compare(DateTimeOfNextDay, DateTime.Now) > 0)
+                    while (DateTime.Compare(DateTimeOfNextDay, DateTime.Now) > 0)// A loop that repeats every day at midnight
                     {
 
 
-                        int lastIndex = 0;
+                        int lastIndex = 0;// For searching the last index of output file
                         List<Person> people = new List<Person>();
                         var files = folderA.GetFiles()
                             .Where(f => (f.Name.EndsWith(".txt") || f.Name.EndsWith(".csv")) && !f.Name.StartsWith("(Done)"))
-                            .OrderBy(f => f.LastWriteTime);
-                        if (files == null || !files.Any())
+                            .OrderBy(f => f.LastWriteTime);// For finding necessary files for process
+                        if (files == null || !files.Any())// If there are no files to process, the program skip some code
                         {
 
                         }
@@ -54,7 +54,7 @@ namespace Hometask1
                         {
                             FileInfo newfiles;
                             int fileNumber = 1;
-                            foreach (FileInfo file in files)
+                            foreach (FileInfo file in files)// 
                             {
 
                                 try
@@ -62,10 +62,10 @@ namespace Hometask1
                                     using (TextFieldParser parser = new TextFieldParser($@"{file}"))
                                     {
                                         parser.TextFieldType = FieldType.Delimited;
-                                        parser.SetDelimiters(",");
-                                        while (!parser.EndOfData)
+                                        parser.SetDelimiters(",");// Easy method to correct separete the data in CSV file
+                                        while (!parser.EndOfData)// A loop that runs while having some data in the file 
                                         {
-                                            string[] fields = parser.ReadFields();
+                                            string[] fields = parser.ReadFields();// Each line of the file as array of some data
 
 
                                             Person newPerson = new Person();
@@ -153,13 +153,13 @@ namespace Hometask1
 
 
                                     string folderName = @"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b";
-                                    string pathString = System.IO.Path.Combine(folderName, $"{name}");
+                                    string pathString = System.IO.Path.Combine(folderName, $"{name}");// Creating subfolder
                                     System.IO.Directory.CreateDirectory(pathString);
                                     string json = JsonConvert.SerializeObject(groupByCityThenByService,
                                                                               Newtonsoft.Json.Formatting.Indented,
-                                                                              new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });
+                                                                              new IsoDateTimeConverter() { DateTimeFormat = "yyyy-dd-MM" });// Creating JSON file
 
-                                    if (Directory.GetFileSystemEntries(pathString).Length != 0)
+                                    if (Directory.GetFileSystemEntries(pathString).Length != 0)// Creating clear index for  the output file, if the directory is not empty
                                     {
                                         DirectoryInfo folderB = new DirectoryInfo(pathString);
                                         string lastOutputName = "";
@@ -206,7 +206,7 @@ namespace Hometask1
                                 }
                             }
                         }
-                        Thread.Sleep(10000);
+                        Thread.Sleep(10000);// Interval of researching for a new files is 10 sec
                         
                     }
 
@@ -224,7 +224,7 @@ namespace Hometask1
                     string name = string.Format(CultureInfo.InvariantCulture, "{0:MM-dd-yyyy}", DateTime.Today);
                     parsedFiles = Directory.GetFiles($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}", "*.json").Length;
                     var jsonFiles = Directory.GetFiles($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}", "*.json");
-                    foreach (var jsonFile in jsonFiles)
+                    foreach (var jsonFile in jsonFiles)// Counting number of lines in output files
                     {
                         var lineCount = 0;
                         using (var reader = File.OpenText(jsonFile))
@@ -245,7 +245,7 @@ namespace Hometask1
                     {
                         invalidFiles = string.Join("", invalidFilesList.Distinct());
                         meta = $"parsed_files: {parsedFiles}\nparsed_lines: {parsedLines}\nfound_errors: {numberOfErrors}\ninvalid_files: [{invalidFiles}]";
-                        System.IO.File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\meta.log", meta);
+                        System.IO.File.WriteAllText($@"C:\Users\sergi\OneDrive\Рабочий стол\Radency\Hometask1\folder_b\{name}\meta.log", meta);// Writing file with information
                     }
                 }
 
