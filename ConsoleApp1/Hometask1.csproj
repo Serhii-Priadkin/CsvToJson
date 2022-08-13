@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="FileHelpers" Version="3.5.1" />
-    <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Text.Json" Version="6.0.5" />
   </ItemGroup>
